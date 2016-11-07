@@ -22,11 +22,11 @@ Base.show{T}(io::IO, x::Wrap{T}) = print(io, "Wrap(", x.value, ")")
     Switch{A,B}(value::Union{A,B})
 
 Create an single-element storage container which can contain one of two possible
-input types. Semantically this type is similar to `Union{A,B}` but optimized for
-faster dispatch.
+input types. Semantically this type has similarities with `Union{A,B}`, but is
+optimized for faster dispatch.
 
 Using the `Switch` instance under `broadcast` is efficient and type-stable, and
-is convenient to use with dot-call syntax. For example
+is convenient to use with "dot-call" syntax. For example
 
     x = Switch{Int, Float64}(1)
     x .+ 1    # = Switch{Int, Float64}(2)
@@ -99,9 +99,9 @@ end
     out_type = switchtype(T1,T2)
 
     if out_type <: Switch
-        return x.which ? out_type(f(x.a.value, y)) : out_type(f(x.b.value, y))
+        return x.which ? out_type(broadcast(yi -> f(x.a.value, yi), y)) : out_type(broadcast(f(x.b.value, yi), y)))
     else
-        return x.which ? f(x.a.value, y) : f(x.b.value, y)
+        return x.which ? broadcast(yi -> f(x.a.value, yi), y) : yi -> broadcast(f(x.b.value, yi), y))
     end
 end
 
@@ -111,9 +111,9 @@ end
     out_type = switchtype(T1,T2)
 
     if out_type <: Switch
-        return y.which ? out_type(f(x, y.a.value)) : out_type(f(x, y.b.value))
+        return y.which ? out_type(broadcast(xi -> f(xi, y.a.value), x)) : out_type(broadcast(xi -> f(xi, y.b.value), x))
     else
-        return y.which ? f(x, y.a.value) : f(x, y.b.value)
+        return y.which ? broadcast(xi -> f(xi, y.a.value), x) : broadcast(xi -> f(xi, y.b.value), x)
     end
 end
 
