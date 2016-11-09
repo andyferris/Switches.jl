@@ -36,26 +36,37 @@ type-stable and should be avoided in performance-sensitive situations.
 ## `Optional` and `Unknown`: a data-friendly alternative to `Nullable`
 
 Julia's in-built `Nullable` type is often semantically compared to a container
-with either zero or one values. This is particularly useful when an object *might
-not exist*, for instance some system resource may or may not be initialized.
+with either zero or one value. This is particularly useful when an object *might
+not exist*, for instance a system resource may or may not be initialized or
+available.
 
 On the other hand, data scientists and others might like to deal with
-data which *exists in principle* but is *unknown*. The `Optional{T}` container is a single-element
-container that contains a single `value::T` or else `Unknown(T)`. `Unknown(T)`
-represents an element of `T` which is unknown to the computer program. It is a
-simple typealias of `Switch{T, Unknown{T}}` and therefore uses the same algorithms for speed
-and the same dot-call syntax for convenience (unwrapping the container to
+data which *exists in principle* but is *unknown*. The `Optional{T}` container
+is a single-element container that contains a single `value::T`, or else `Unknown(T)`.
+`Unknown(T)` represents an element of `T` which is unknown to the computer
+program. `Optional{T}` is a simple typealias of `Switch{T, Unknown{T}}` and
+therefore uses the same algorithms for speed and the same dot-call syntax for
+convenience (like both `Nullable` and `Switch`, unwrapping the container to
 access the value is mandatory).
 
 One example of where the distinction between `Nullable` and `Optional` is in
-performing three-valued logic, where for instance `true | Unknown(Bool)` is
-always `true`. However, since `false | Unknown(Bool)` is unknown, we wrap *both*
-results in an `Optional{Bool}` to provide type stability and speed. On the other
-hand, broadcasting over a `Nullable{Bool}` is unable to result in 3-valued logic
-since an empty container must always broadcast to an empty container, and so it
-follows that `broadcast(|, Nullable(true), Nullable{Bool}())` must equal
-`Nullable{Bool}()`.
+performing three-valued logic, where for instance logic dictates that
+`true | Unknown(Bool)` is always `true`. However, as the result of
+`false | Unknown(Bool)` is unknown, we wrap *both* results in an
+`Optional{Bool}` to provide type stability and speed.
 
-In many senses `Optional` is a compromise between `Base.Nullable` and `DataArrays.NA`.
-Users can extend function methods for the `Unknown` type to facilitate correct
-propagation of `Optional` broadcasts through your code.
+On the other hand, broadcasting over a `Nullable{Bool}` is unable to result in
+three-valued logic. If an empty (i.e. null) container is passed to `broadcast`, the
+output must always be an empty (i.e. null) container. It follows that
+`broadcast(|, Nullable(true), Nullable{Bool}())` must equal `Nullable{Bool}()`.
+
+In many senses `Optional` is a compromise between `Base.Nullable` and the
+`DataArrays` pacakge and its `NA` object. Like `NA`, users can extend function
+methods for the `Unknown` type to facilitate correct propagation of `Optional`
+broadcasts through your code. The fact that `Unknown{T}` is parameterized by a
+type helps one to reason about the output of such specializations (for instance,
+`Unknown{Bool}` must represent either `true` or `false`).
+
+### Acknowledgement
+
+I thank Tim Holy for inspiration on performant dynamic dispatch.
